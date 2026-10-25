@@ -1,0 +1,11 @@
+# Keeps the pinned actions in .github/workflows current (as brew tap-new sets it up).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"

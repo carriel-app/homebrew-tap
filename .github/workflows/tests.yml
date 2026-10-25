@@ -1,0 +1,77 @@
+# ============================================================
+# tests.yml — the cask's checks on every push and pull request
+# ============================================================
+# WHY THIS EXISTS   2026-10-25. A cask is Ruby that runs on the person's Mac,
+#                   and a wrong sha256, url or zap path only shows when someone
+#                   installs. After the shape of `brew tap-new`'s test
+#                   workflow (Homebrew 7, its actions pinned by commit as
+#                   Homebrew pins them).
+# WHAT IT DOES      On macos-26: brew style, then brew audit --cask --strict
+#                   --online --new (the url, the sha256 of the bytes served,
+#                   livecheck against stable.json, the minimum macOS read
+#                   from the app), then installs the cask, checks the app's
+#                   signature, notarization and team, and uninstalls it with
+#                   --zap.
+# WHAT IT CANNOT DO Launch Carriel (no one is signed in to iCloud on a runner),
+#                   or publish anything: it reads the repository and nothing
+#                   else (contents: read).
+# ============================================================
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  cask:
+    runs-on: macos-26
+    permissions:
+      contents: read
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@4790763c0a3ba4036f72634dc079c4a7dfcd4878 # 2026.10.19.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache Homebrew Bundler RubyGems
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: macos-26-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: macos-26-rubygems-
+
+      # Homebrew 6 and later load a third-party tap's code only once it is trusted.
+      - name: Trust this tap
+        env:
+          TAP: ${{ steps.set-up-homebrew.outputs.tap-name }}
+        run: brew trust "$TAP"
+
+      - name: brew style
+        run: brew style carriel-app/tap/carriel
+
+      - name: brew audit
+        run: brew audit --cask --strict --online --new carriel-app/tap/carriel
+
+      - name: Install, check the app, uninstall with zap
+        run: |
+          brew install --cask carriel-app/tap/carriel
+          app=/Applications/Carriel.app
+          codesign --verify --deep --strict "$app"
+          out="$(codesign -dv "$app" 2>&1)"
+          grep -q '^TeamIdentifier=RD9TC9MV83$' <<<"$out"
+          out="$(spctl -a -t exec -vv "$app" 2>&1)"
+          grep -q 'source=Notarized Developer ID' <<<"$out"
+          xcrun stapler validate "$app"
+          test "$(defaults read "$app/Contents/Info" CFBundleIdentifier)" = dev.carriel.app
+          brew uninstall --cask --zap carriel-app/tap/carriel
+          test ! -e "$app"

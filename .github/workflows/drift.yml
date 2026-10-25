@@ -1,0 +1,61 @@
+# ============================================================
+# drift.yml — says so when the cask falls behind Carriel's stable manifest
+# ============================================================
+# WHY THIS EXISTS   2026-10-25. The cask is bumped by hand after each stable
+#                   `cr release` (release/carriel.rb). Carriel updates itself
+#                   (auto_updates), so a late bump harms no installed copy,
+#                   but a new install would start from the older version, and
+#                   `brew reinstall` would go back to it. A daily red run is
+#                   the reminder; GitHub mails it to the owner.
+# WHAT IT DOES      Reads https://dl.carriel.dev/pouch/stable.json and
+#                   Casks/carriel.rb, and fails when the version or the dmg's
+#                   SHA-256 differ.
+# WHAT IT CANNOT DO Bump the cask: it can read the repository and nothing
+#                   else (contents: read), and it trusts nothing from the
+#                   manifest beyond comparing two strings. GitHub turns a
+#                   public repository's schedule off after 60 days without a
+#                   commit; workflow_dispatch runs it by hand.
+# ============================================================
+name: drift
+
+on:
+  schedule:
+    - cron: "37 4 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Compare the cask with stable.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          manifest="$(curl -fsS --proto '=https' --max-time 30 https://dl.carriel.dev/pouch/stable.json)"
+          live_version="$(jq -r '.version' <<<"$manifest")"
+          live_sha="$(jq -r '.dmg.sha256' <<<"$manifest")"
+          cask="$(gh api "repos/$REPO/contents/Casks/carriel.rb" --jq '.content' | base64 --decode)"
+          cask_version="$(sed -nE 's/^  version "([^"]+)"$/\1/p' <<<"$cask")"
+          cask_sha="$(sed -nE 's/^  sha256 "([0-9a-f]{64})"$/\1/p' <<<"$cask")"
+          if ! [[ "$live_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && "$live_sha" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "::error::stable.json names no x.y.z version and dmg SHA-256"
+            exit 1
+          fi
+          if [ "$live_version" != "$cask_version" ]; then
+            echo "::error::Casks/carriel.rb says ${cask_version:-nothing}, stable.json says $live_version: copy release/carriel.rb from cr release into Casks/ and push"
+            exit 1
+          fi
+          if [ "$live_sha" != "$cask_sha" ]; then
+            echo "::error::Casks/carriel.rb's sha256 isn't the dmg's in stable.json for $live_version"
+            exit 1
+          fi
+          echo "Casks/carriel.rb matches stable.json: $live_version"
