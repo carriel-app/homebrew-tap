@@ -25,8 +25,8 @@
 #                   says @VERSION@ and @SHA256@: that one is the template.
 # ============================================================
 cask "carriel" do
-  version "1.0.5"
-  sha256 "8cd0df19cc0ca2298bdbc13f7739fbd98e415544d13ec7d7ec66ae62b6459732"
+  version "1.0.6"
+  sha256 "39cdf007c773e94f48552bdf97545bb3f4d4c43515591572146ce0fbfe3b327e"
 
   url "https://dl.carriel.dev/pouch/Carriel-#{version}-arm64.dmg"
   name "Carriel"
