@@ -25,7 +25,7 @@ says `source=Notarized Developer ID`.
 ## Updates
 
 Carriel keeps itself up to date: Carriel Updater checks Carriel's signed
-manifest about once a day, so the cask says `auto_updates true`.
+manifest by itself, so the cask says `auto_updates true`.
 `brew upgrade` replaces Carriel only when the copy on your Mac is older than
 this cask, and `brew upgrade --greedy` whenever this cask is newer than the
 version Homebrew installed. Either way Homebrew quits Carriel first and opens
@@ -49,7 +49,7 @@ neither touches your iCloud or iCloud Keychain. macOS may list Carriel in
 
 ## About this tap
 
-Carriel's developer updates this cask with each stable release. Homebrew
+Each stable release of Carriel updates this cask by itself. Homebrew
 doesn't support third-party taps: for help with Carriel, write to
 support@lonelyduck.io.
 

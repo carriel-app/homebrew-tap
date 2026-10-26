@@ -3,8 +3,8 @@
 # ============================================================
 # WHY THIS EXISTS   2026-10-25. Carriel is sold directly as a notarized
 #                   Developer ID download (D74), and its cask lives in its
-#                   own tap, github.com/carriel-app/homebrew-tap (D78: a week
-#                   after launch). From Carriel's
+#                   own tap, github.com/carriel-app/homebrew-tap (D78; live
+#                   since launch day, 2026-10-25). From Carriel's
 #                   .ai/docs/1.0.0/homebrew/carriel.rb (lane h3a, 2026-10-24,
 #                   after 0.x's and subtank's). People install it by full
 #                   name, which trusts this one cask and nothing else in the
@@ -17,8 +17,8 @@
 #                   zap may remove.
 # WHAT IT CANNOT DO Remove what isn't a file (see the note above zap), follow
 #                   the beta channel (stable only), or update itself: each
-#                   stable release rewrites version and sha256 here, from the
-#                   release/carriel.rb that `cr release` writes.
+#                   stable `cr release` writes version and sha256 here from
+#                   its release/carriel.rb and pushes them (step m, D88).
 # VERSION, SHA256   The stable dmg's, as `cr release` built, notarized and
 #                   published it; the same SHA-256 is in stable.json and on
 #                   carriel.app/download/. The copy beside Carriel's source
@@ -42,8 +42,8 @@ cask "carriel" do
     end
   end
 
-  # Carriel Updater checks a signed manifest about once a day and swaps the
-  # app itself. Homebrew still upgrades it when the installed app is older
+  # Carriel Updater checks Carriel's signed manifest by itself and swaps the
+  # app. Homebrew still upgrades it when the installed app is older
   # than this cask (HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS, the default).
   auto_updates true
   # Apple silicon only, and macOS 26 (Tahoe) or newer: LSMinimumSystemVersion
