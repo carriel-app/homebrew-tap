@@ -1,8 +1,10 @@
 # ============================================================
 # drift.yml — says so when the cask falls behind Carriel's stable manifest
 # ============================================================
-# WHY THIS EXISTS   2026-10-25. The cask is bumped by hand after each stable
-#                   `cr release` (release/carriel.rb). Carriel updates itself
+# WHY THIS EXISTS   2026-10-25. Each stable `cr release` bumps the cask: its
+#                   step m commits "carriel <version>" and pushes it (since
+#                   Carriel 1.0.6, 2026-10-26, D88), and this is the backstop
+#                   for a release whose step m didn't. Carriel updates itself
 #                   (auto_updates), so a late bump harms no installed copy,
 #                   but a new install would start from the older version, and
 #                   `brew reinstall` would go back to it. A daily red run is
@@ -51,7 +53,7 @@ jobs:
             exit 1
           fi
           if [ "$live_version" != "$cask_version" ]; then
-            echo "::error::Casks/carriel.rb says ${cask_version:-nothing}, stable.json says $live_version: copy release/carriel.rb from cr release into Casks/ and push"
+            echo "::error::Casks/carriel.rb says ${cask_version:-nothing}, stable.json says $live_version: cr release (its step m) pushes this cask; when it does not, the last lines of that run say how"
             exit 1
           fi
           if [ "$live_sha" != "$cask_sha" ]; then
